@@ -42,8 +42,11 @@ import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.hamcrest.Matchers.*;
 
@@ -189,11 +192,19 @@ public class KuromojiAnalysisTests extends ESTestCase {
         assertSimpleTSOutput(tokenFilter.create(tokenizer), expected);
     }
 
-
-    public AnalysisService createAnalysisService() {
+    
+    public AnalysisService createAnalysisService() throws IOException {
         String json = "/org/elasticsearch/index/analysis/kuromoji_analysis.json";
+        InputStream empty_dict = getClass().getResourceAsStream("empty_user_dict.txt");
+        InputStream dict = getClass().getResourceAsStream("user_dict.txt");
+        Path home = createTempDir();
+        Path config = home.resolve("config");
+        Files.createDirectory(config);
+        Files.copy(empty_dict, config.resolve("empty_user_dict.txt"));
+        Files.copy(dict, config.resolve("user_dict.txt"));
+
         Settings settings = Settings.settingsBuilder()
-                .put("path.home", createTempDir())
+                .put("path.home", home)
                 .loadFromStream(json, getClass().getResourceAsStream(json))
                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
                 .build();
@@ -259,7 +270,7 @@ public class KuromojiAnalysisTests extends ESTestCase {
 
     // fix #59
     @Test
-    public void testKuromojiEmptyUserDict() {
+    public void testKuromojiEmptyUserDict() throws IOException {
         AnalysisService analysisService = createAnalysisService();
         TokenizerFactory tokenizerFactory = analysisService.tokenizer("kuromoji_empty_user_dict");
         assertThat(tokenizerFactory, instanceOf(KuromojiTokenizerFactory.class));
