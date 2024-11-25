@@ -62,6 +62,8 @@ public class SynonymsAnalysisTest extends ESTestCase {
 
     @Test
     public void testSynonymsAnalysis() throws IOException {
+        String json = "/org/elasticsearch/index/analysis/synonyms/synonyms.json";
+        
         InputStream synonyms = getClass().getResourceAsStream("synonyms.txt");
         InputStream synonymsWordnet = getClass().getResourceAsStream("synonyms_wordnet.txt");
         Path home = createTempDir();
@@ -71,7 +73,7 @@ public class SynonymsAnalysisTest extends ESTestCase {
         Files.copy(synonymsWordnet, config.resolve("synonyms_wordnet.txt"));
 
         Settings settings = settingsBuilder().
-                loadFromClasspath("org/elasticsearch/index/analysis/synonyms/synonyms.json")
+                loadFromStream(json, getClass().getResourceAsStream(json))
                 .put("path.home", home)
                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT).build();
 
